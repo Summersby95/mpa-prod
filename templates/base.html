@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Internal New Product Development Process Application">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" media="screen" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" media="print" href="{{ url_for('static', filename='css/print.css') }}">
+    <title>Meade Product App</title>
+</head>
+<body>
+    <header>
+        <!-- navbar for desktop -->
+        <nav class="nav-extended green darken-1">
+            <div class="nav-wrapper">
+                <a href="{{ url_for('home') }}" class="brand-logo left">
+                    <img src="{{ url_for('static', filename='images/meade_farm_logo.png') }}" alt="Meade Farm Logo" class="responsive-img">
+                </a>
+                <a href="#" data-target="mobile-sidenav" class="sidenav-trigger right">
+                    <i class="material-icons">menu</i>
+                </a>
+                <ul class="right hide-on-med-and-down">
+                    {% if session.user %} 
+
+                        <li><a href="{{ url_for('home') }}">Home</a></li>
+                        <li><a href="{{ url_for('get_upcoming') }}">View Upcoming Products</a></li>
+                        <li><a href="{{ url_for('all_products') }}">All Products</a></li>
+                        {% if session.role == "Commercial" or session.role == "Admin" %}
+
+                            <li><a href="{{ url_for('customer_select') }}">Create New Product</a></li>
+
+                        {% endif %}
+                        <li><a href="{{ url_for('my_tasks') }}">My Tasks</a></li>
+                        <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+
+                    {% else %} 
+
+                        <li><a href="{{ url_for('login') }}">Log In</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+        <!-- side nav for mobile -->
+        <ul class="sidenav" id="mobile-sidenav">
+            {% if session.user %} 
+
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('get_upcoming') }}">View Upcoming Products</a></li>
+                <li><a href="{{ url_for('all_products') }}">All Products</a></li>
+                {% if session.role == "Commercial" or session.role == "Admin" %}
+
+                    <li><a href="{{ url_for('customer_select') }}">Create New Product</a></li>
+
+                {% endif %}
+                <li><a href="{{ url_for('my_tasks') }}">My Tasks</a></li>
+                <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+
+            {% else %} 
+
+                <li><a href="{{ url_for('login') }}">Log In</a></li>
+                <li><a href="{{ url_for('register') }}">Register</a></li>
+
+            {% endif %}
+        </ul>
+    </header>
+    <!-- flash alert messages section -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %} 
+            <section>
+                {% for message in messages %} 
+                    <div class="row flashes light-green-text text-accent-4">
+                        <h4 class="center-align">{{ message }}</h4>
+                    </div>
+                {% endfor %}
+            </section>
+        {% endif %} 
+    {% endwith %}
+    <!-- block content container -->
+    <main>
+        <div class="container">
+            {% block content %} 
+            {% endblock %}
+        </div>
+        
+    </main>
+    <!-- footer section -->
+    <footer class="page-footer green darken-1">
+        <div class="container">
+            <div class="row">
+                <div class="col s12 center-align">
+                    <ul>
+                        <li><a class="grey-text text-lighten-3" href="https://www.facebook.com/meadefarm/" target="_blank">Facebook</a></li>
+                        <li><a class="grey-text text-lighten-3" href="https://www.linkedin.com/company/meade-potato-company/" target="_blank">LinkedIn</a></li>
+                        <li><a class="grey-text text-lighten-3" href="https://twitter.com/meadepotatocom?lang=en" target="_blank">Twitter</a></li>
+                        <li><a class="grey-text text-lighten-3" href="https://github.com/Summersby95/meade-product-app" target="_blank">GitHub</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <div class="container">
+                © 2021 Meade Farm Group
+            </div>
+        </div>
+    </footer>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block scripts %}
+    {% endblock %}
+</body>
+</html>

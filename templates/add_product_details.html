@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "macros.j2" as macros %} 
+{% block content %} 
+
+    <h3 class="center-align">Add Product <strong><i>{{ session.role }}</i></strong> Details</h3>
+
+    {% if product %} 
+
+        <form action="{{ url_for('add_product_details', product_id=product._id) }}" method="post">
+
+            {% for role in roles %}
+
+                <h4><i class="material-icons">{{ role.role_logo }}</i> {{ role.role_name }} Details</h4>
+
+                <div class="row">
+
+                    {% if session.role in [role.role_name, "Admin"] %}
+
+                        {% if field_list[(role.role_name.lower())+"_details"] is mapping %} 
+                            {% for sub_heading, sub_array in field_list[(role.role_name.lower())+"_details"].items() %} 
+                                <div class="col s12">
+                                    <h5><strong><i>{{ sub_heading.replace("_", " ").title() }}</i></strong></h5>
+                                </div>
+                                {{ macros.form_builder(sub_array, role.role_name, product, context=sub_heading) }}
+                                <div class="col s12">
+                                    <hr>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            {{ macros.form_builder(field_list[(role.role_name.lower())+"_details"], role.role_name, product) }}
+                        {% endif %}
+                    
+                    {% else %}
+
+                        {% if product[role.role_name.lower()] %} 
+
+                            {{ macros.view_builder(product[role.role_name.lower()].items()) }}
+                        
+                        {% elif role.role_name == "Commercial" %}
+
+                            {{ macros.view_builder(product.items(), context="Commercial") }}
+            
+                        {% else %} 
+            
+                            <h5 class="center-align">No {{ role.role_name }} Details Submitted Yet</h5>
+            
+                        {% endif %}
+
+                    {% endif %}
+
+                </div>
+
+                <hr>
+            
+            {% endfor %}
+
+            <div class="row">
+                <div class="col s12 center-align">
+                    <button class="btn-large green accent-3 center-align">
+                        <i class="material-icons right">check</i> Submit
+                    </button>
+                    <a href="{{ url_for('view_product', product_id=product._id) }}" class="btn-large red accent-3 center-align">
+                        <i class="material-icons right">cancel</i> Cancel
+                    </a>
+                </div>
+            </div>
+
+        </form>
+
+    {% endif %}
+
+{% endblock %}

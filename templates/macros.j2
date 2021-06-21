@@ -1,0 +1,327 @@
+{% macro form_builder(field_array, role, product=None, context=None) %}
+    {% for field in field_array %}
+        {# build form elements from field_list #}
+        {% if product != None %}
+            {% if role != "Commercial" %}
+
+                {% if (role.lower()) in product %}
+                    {# check if the product object already has an attribute for the field and if it does, 
+                        set it as the value for the element #}
+                    {% if context != None %} 
+                        {% if context in product[(role.lower())] %}
+                            {% if field.field_name in product[(role.lower())][context] %}
+                                {% set value = product[(role.lower())][context][field.field_name] %}
+                            {% else %}
+                                {% set value = "" %}
+                            {% endif %}
+                        {% else %} 
+                            {% set value = "" %}
+                        {% endif %}
+                    {% else %}
+                        {% if field.field_name in product[(role.lower())] %}
+                            {% set value = product[(role.lower())][field.field_name] %}
+                        {% else %} 
+                            {% set value = "" %} 
+                        {% endif %}
+                    {% endif %}
+
+                    
+                {% else %} 
+                    {% set value = "" %}
+                {% endif %}
+            
+            {% else %}
+
+                {% if field.field_name in product %}
+                    {% set value = product[field.field_name] %}
+                {% else %}
+                    {% set value = "" %}
+                {% endif %}
+            
+            {% endif %}
+        {% else %}
+            {% set value = "" %}
+        {% endif %}
+        {# Build input depending on input type #}
+        {% if field.field_type == "input" %} 
+
+            <div class="input-field col s12 m6">
+                <input type="{{ field.input_type }}" class="validate" name="{{ field.field_name }}" id="{{ field.field_name }}" pattern="{{ field.pattern }}" title="{{ field.title }}" value="{{ value }}" required>
+                <label for="{{ field.field_name }}">{{ field.field_name.replace("_", " ").title() }}</label>
+            </div>
+
+        {% elif field.field_type == "date" %}
+
+            <div class="input-field col s12 m6">
+                <input type="text" class="datepicker validate" name="{{ field.field_name }}" id="{{ field.field_name }}" value="{{ value }}" required>
+                <label for="{{ field.field_name }}">{{ field.field_name.replace("_", " ").title() }}</label>
+            </div>
+
+        {% elif field.field_type == "multiselect" %}
+
+            <div class="input-field col s12 m6">
+                <select multiple name="{{ field.field_name }}" id="{{ field.field_name }}" required>
+                    
+                    {% for option in field.options %} 
+
+                        {% if value is iterable and (value is not string and value is not mapping) %}
+                            {% if option in value %} 
+                                {% set sel = "selected" %} 
+                            {% else %} 
+                                {% set sel = "" %}
+                            {% endif %}
+                        {% else %} 
+                            {% set sel = "" %} 
+                        {% endif %}
+
+                        <option value="{{ option }}" {{ sel }}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <label for="{{ field.field_name }}">{{ field.field_name.replace("_", " ").title() }}</label>
+            </div>
+        
+        {% elif field.field_type == "select" %}
+
+            <div class="input-field col s12 m6">
+                <select name="{{ field.field_name }}" id="{{ field.field_name }}" required>
+                    {% for option in field.options %} 
+                        {% if option == value %}
+                            {% set sel = "selected" %} 
+                        {% else %} 
+                            {% set sel = "" %} 
+                        {% endif %} 
+
+                        <option value="{{ option }}" {{ sel }}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+                <label for="{{ field.field_name }}">{{ field.field_name.replace("_", " ").title() }}</label>
+            </div>
+        {# spec grid is a special type of field input using a table structure #}
+        {% elif field.field_type == "spec_grid" %}
+            <div class="col s12 row">
+                <table class="striped responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Defect</th>
+                            <th>R/A/G</th>
+                            <th>Tolerance (%)</th>
+                            <th>Comments</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for spec in field.options %}
+
+                            {% if session.role.lower() in product %}
+                                {% if field.field_name in product[session.role.lower()] %}
+                                    {% if spec.replace(' ', '_').lower() in product[session.role.lower()][field.field_name] %}
+                                        {% set value = product[session.role.lower()][field.field_name][spec.replace(' ', '_').lower()] %}
+                                    {% else %}
+                                        {% set value = "" %}
+                                    {% endif %}
+                                {% else %}
+                                    {% set value = "" %}
+                                {% endif %}
+                            {% else %}
+                                {% set value = "" %}
+                            {% endif %}
+
+                            <tr>
+                                <td>{{ spec }}</td>
+                                <td>
+                                    <select class="validate" name="{{ spec.replace(' ', '_').lower() }}_rag" id="{{ spec.replace(' ', '_').lower() }}_rag">
+                                        {% set rag_options = ["Green","Amber","Red"] %}
+                                        {% for rag_opt in rag_options %}
+                                            {% if value.rag == rag_opt %}
+                                                {% set sel = "selected" %}
+                                            {% else %}
+                                                {% set sel = "" %}
+                                            {% endif %}
+
+                                            <option value="{{ rag_opt }}" {{ sel }}>{{ rag_opt }}</option>
+                                        {% endfor %}
+                                        
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" class="validate" name="{{ spec.replace(' ', '_').lower() }}_tol" id="{{ spec.replace(' ', '_').lower() }}_tol" value="{{ value.tolerance }}">
+                                </td>
+                                <td>
+                                    <input type="text" class="validate" name="{{ spec.replace(' ', '_').lower() }}_com" id="{{ spec.replace(' ', '_').lower() }}_com" value="{{ value.comments }}">
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% endif %}
+
+    {% endfor %}
+    
+{% endmacro %}
+
+{# The view builder macro builds a product view #}
+{% macro view_builder(product_details, context=None) %}
+
+    {% for field, value in product_details %} 
+        {% if value is mapping and (context == None or field == "sign_off") %}
+
+            <div class="col s12">
+                <h5><strong><i>{{ field.replace("_", " ").title() }}</i></strong></h5>
+            </div>
+            {# checks for specific fields to see if they require special view cases #}
+            {% if field == "quality_specification" %}
+
+                <div class="col s12">
+                    <table class="striped responsive-table">
+                        <thead>
+                            <tr>
+                                <th>Defect</th>
+                                <th>R/A/G</th>
+                                <th>Tolerance (%)</th>
+                                <th>Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for defect, def_details in value.items() %}
+
+                                <tr>
+                                    <th>{{ defect.replace("_", " ").title() }}
+                                    <td>{{ def_details.rag }}</td>
+                                    <td>{{ def_details.tolerance }}</td>
+                                    <td>{{ def_details.comments }}</td>
+                                </tr>
+
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            {% else %}
+
+                {% for sub_field, sub_val in value.items() %} 
+
+                    <div class="col s12 m6 row">
+                        <div class="col s4">
+                            <strong>{{ sub_field.replace("_", " ").title() }}</strong>
+                        </div>
+                        <div class="col s8">
+                            {% if sub_field == "signature" %}
+                                <img src="{{ sub_val }}" class="responsive-img signature-img">
+                            {% elif sub_val is iterable and (sub_val is not string and sub_val is not mapping) %}
+                                {{ ", ".join(sub_val) }}
+                            {% else %}  
+                                {{ sub_val }}
+                            {% endif %} 
+                        </div>
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+        {% elif value is not mapping and field != "_id" %} 
+            <div class="col s12 m6 row">
+                <div class="col s4">
+                    <strong>{{ field.replace("_", " ").title() }}</strong>
+                </div>
+                <div class="col s8">
+                    {% if value is iterable and (value is not string and value is not mapping) %}
+                        {{ ", ".join(value) }}
+                    {% else %}  
+                        {{ value }}
+                    {% endif %} 
+                </div>
+            </div>
+        {% endif %}
+        
+
+    {% endfor %}
+
+{% endmacro %}
+
+{% macro table_builder(product_list, context=None) %}
+
+    <table class="highlight responsive-table">
+        <thead>
+
+            {% if product_list %}
+                    
+                <tr>
+                    {# cycle through the first item in the products dictionary to build table header #}
+                    {% for field, value in product_list[0].items() %}
+
+                        {% if field != "_id" and field != "created_on" and field != "new" and field != "colour" %}
+                            {# transform the field name from db field name to coherent display name #}
+                            <th>{{ field.replace("_", " ").title() }}</th>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                    <th>Actions</th>
+                    {% if context == "pending" %}
+                        <th></th>
+                    {% endif %}
+
+                </tr>
+
+            {% endif %}
+
+        </thead>
+        <tbody>
+
+            {% if product_list %}
+                {# cycle through all products in products list #}
+                {% for product in product_list %}
+                    
+                    <tr class="{{ product.colour }}">
+                        {# iterate over the dict object of each project, get the field, value from each #}
+                        {% for field, value in product.items() %}
+                            {# we don't want the "_id" value displaying #}
+                            {% if field != "_id" and field != "created_on" and field != "new" and field != "colour" %}
+
+                                <td>{{ value }}</td>
+
+                            {% endif %}
+
+                        {% endfor %}
+                        {# at the end of each product row we create a link that will direct the user to the view_product view for the product #}
+                        <td>
+                            <a href="{{ url_for('view_product', product_id=product._id) }}" class="btn waves-effect green accent-3">
+                                <i class="material-icons right">format_list_bulleted</i> View Product
+                            </a>
+                        </td>
+                        {% if context == "pending" %}
+                            <td>
+                                {% if product.status == "Pending - Awaiting Commercial Sign Off" 
+                                    and (session.role == "Commercial" or session.role == "Admin")
+                                    and (session.department == product.department or session.department == "All") %}
+                                    <a href="{{ url_for('sign_off', product_id=product._id) }}" class="btn waves-effect purple accent-3">
+                                        <i class="material-icons right">border_color</i> Sign Off
+                                    </a>
+                                {% else %}
+                                    {% if session.department == product.department or session.department == "All" %} 
+                                        <a href="{{ url_for('add_product_details', product_id=product._id) }}" class="btn waves-effect blue accent-3">
+                                            <i class="material-icons right">edit</i> Add Details
+                                        </a>
+                                    {% else %} 
+                                        <a href="{{ url_for('my_tasks') }}" disabled class="btn waves-effect blue accent-3">
+                                            <i class="material-icons right">close</i> Not Allowed
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        {% endif %}
+
+                    </tr>
+
+                {% endfor %}
+
+            {% endif %}
+
+        </tbody>
+    </table>
+
+{% endmacro %}

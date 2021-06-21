@@ -1,0 +1,77 @@
+{% extends "base.html" %} 
+{% import "macros.j2" as macros %} 
+{% block content %}
+
+    <h3 class="center-align">Product Sign Off</h3>
+
+    <h4><i class="material-icons">credit_card</i> Commercial Details</h4>
+
+    {% if product %} 
+
+        <div class="row" id="product-details">
+            {# we cycle through the product dictionary #}
+
+            {{ macros.view_builder(product.items(), context="Commercial") }}
+
+        </div>
+
+    {% endif %}
+
+    <hr>
+    {# we cycle through the roles in our roles array #}
+    {% for role in roles %} 
+
+        <h4><i class="material-icons">card_giftcard</i> {{ role.role_name }} Details</h4>
+        {# we check if the there is an object in the product for the role #}
+        {% if product[role.role_name.lower()] %} 
+
+            <div class="row">
+
+                {{ macros.view_builder(product[role.role_name.lower()].items()) }}
+
+            </div>
+
+        {% else %} 
+
+            <h5 class="center-align">No {{ role.role_name }} Details Submitted Yet</h5>
+
+        {% endif %}
+
+        <hr>
+
+    {% endfor %}
+    
+    <br>
+
+    <h4 class="center-align"><i class="material-icons">edit</i> Sign Off</h4>
+
+    <form action="{{ url_for('sign_off', product_id=product._id) }}" method="post" id="signature-form">
+        <div class="card-panel">
+            <div class="row">
+                <div class="col s12">
+                    <h5 id="signature-notification" class="center-align">Please draw your signature in the field below.</h5>
+                    <hr>
+                </div>
+                <div class="signature-pad-div col s12 m6 offset-m3">
+                    <canvas id="signature-pad"></canvas>
+                </div>
+                <input type="text" id="signature-input" name="signature-input" class="no-display">
+                <div class="col s12 center-align">
+                    <a href="{{ url_for('view_product', product_id=product._id) }}" class="btn-large red accent-3">
+                        <i class="material-icons right">clear</i> Cancel
+                    </a>
+                    <button type="button" class="btn-large blue accent-3" id="clear-sig">
+                        <i class="material-icons right">clear_all</i> Clear
+                    </button>
+                    <button type="submit" id="submit-sig" class="btn-large green accent-3">
+                        <i class="material-icons right">check</i> Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+{% endblock %} 
+{% block scripts %} 
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@2.3.2/dist/signature_pad.min.js"></script>
+    <script src="{{ url_for('static', filename='js/signature.js') }}"></script>
+{% endblock %}

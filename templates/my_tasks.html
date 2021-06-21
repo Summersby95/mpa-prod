@@ -1,0 +1,27 @@
+{% extends "base.html" %} 
+{% import "macros.j2" as macros %}
+{% block content %} 
+
+    <h3 class="center-align">My Tasks <i class="material-icons small">dashboard</i></h3>
+
+    <h5><strong>Logged in as: <i class="material-icons left">person</i></strong>{{ session.user }}</h5>
+    <h5><strong>Department: <i class="material-icons left">folder_shared</i></strong>{{ session.department }}</h5>
+    <h5><strong>Role: <i class="material-icons left">remove_red_eye</i></strong>{{ session.role }}</h5>
+
+    <hr>
+
+    <h4>The Following Products Require <strong><i>{{ session.role }}</i></strong> Details</h4>
+
+    <hr>
+
+    {% if products|length %} 
+        {{ macros.table_builder(products, context="pending") }}
+    {% else %}
+        <h5 class="center-align"><strong>You're All Caught Up!</strong> <i class="material-icons">mood</i></h5>
+    {% endif %}
+    
+
+{% endblock %}
+{% block scripts %} 
+    <script src="{{ url_for('static', filename='js/my_tasks.js') }}"></script>
+{% endblock %}
